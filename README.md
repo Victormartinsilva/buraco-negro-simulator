@@ -1,5 +1,7 @@
 # Buraco Negro — Simulador de espaço-tempo
 
+![Preview do simulador](assets/preview.png)
+
 Projeto pessoal: simulador interativo de buraco negro em HTML5/Canvas e JavaScript, com parâmetros físicos ajustáveis e efeito de lente gravitacional.
 
 **Victor** · [GitHub](https://github.com/Victormartinsilva/buraco-negro-simulator) · link do app no Streamlit após o deploy
@@ -61,6 +63,8 @@ Se o repositório tiver só esta pasta (só este projeto), use essa pasta como *
 ```
 ├── app.py              # App Streamlit (embarca o HTML)
 ├── buraco-negro.html   # Simulador (canvas + JS)
+├── assets/
+│   └── preview.png     # Screenshot do projeto
 ├── requirements.txt
 └── README.md
 ```
