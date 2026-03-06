@@ -4,7 +4,7 @@
 
 Projeto pessoal: simulador interativo de buraco negro em HTML5/Canvas e JavaScript, com parâmetros físicos ajustáveis e efeito de lente gravitacional.
 
-**Victor** · [GitHub](https://github.com/Victormartinsilva/buraco-negro-simulator) · link do app no Streamlit após o deploy
+**Victor** · [GitHub](https://github.com/Victormartinsilva/buraco-negro-simulator) · **[▶ Acessar o app](https://buraco-negro-simulator-7f3qiqmy2f9nxuphbqspc4.streamlit.app/)**
 
 ---
 
