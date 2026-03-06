@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buraco Negro · Simulador — Victor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary-bg: #0a0a0f;
+      --secondary-bg: #1a1a2e;
+      --accent-color: #00d4ff;
+      --accent-secondary: #ff6b35;
+      --text-primary: #ffffff;
+      --text-secondary: #b8bcc8;
+      --text-muted: #6b7280;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.4);
+      --shadow-accent: 0 0 30px rgba(0, 212, 255, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    .header {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 1.5rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-primary);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: var(--shadow-accent);
+    }
+
+    .logo-text h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text-primary), var(--accent-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.2rem;
+    }
+
+    .logo-text .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-color);
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--glass-border);
+      border-color: var(--accent-color);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-color), #0099cc);
+      border-color: var(--accent-color);
+    }
+
+    .main-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 320px 280px;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .simulation-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--shadow-primary);
+    }
+
+    .canvas-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .canvas-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .canvas-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .canvas-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    canvas {
+      background: radial-gradient(circle at center, #0a0a0f 0%, #000 100%);
+      border-radius: 12px;
+      border: 2px solid var(--glass-border);
+      box-shadow: 
+        var(--shadow-primary),
+        inset 0 0 100px rgba(0, 212, 255, 0.05);
+      cursor: crosshair;
+      transition: all 0.3s ease;
+    }
+
+    canvas:hover {
+      border-color: var(--accent-color);
+      box-shadow: 
+        var(--shadow-primary),
+        var(--shadow-accent),
+        inset 0 0 100px rgba(0, 212, 255, 0.1);
+    }
+
+    .canvas-controls {
+      display: flex;
+      gap: 1rem;
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .control-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-primary);
+      height: fit-content;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .panel-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-color), var(--accent-secondary));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .control-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .control-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-color);
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    .control-unit {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: 0.25rem;
+    }
+
+    .slider {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-color);
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-color), #0099cc);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 212, 255, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 4px 16px rgba(0, 212, 255, 0.6);
+    }
+
+    .preset-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .preset-btn {
+      padding: 0.5rem 0.75rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .preset-btn:hover, .preset-btn.active {
+      background: var(--accent-color);
+      color: var(--primary-bg);
+      border-color: var(--accent-color);
+    }
+
+    .btn.recording {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: #ef4444;
+      color: #fca5a5;
+      animation: pulse 1.5s infinite;
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .info-label {
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .info-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-color);
+      font-weight: 500;
+    }
+
+    .chart-container {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      height: 120px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .performance-graph {
+      width: 100%;
+      height: 80px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 10px,
+        var(--border-color) 10px,
+        var(--border-color) 11px
+      );
+      position: relative;
+    }
+
+    @media (max-width: 1200px) {
+      .main-container {
+        grid-template-columns: 1fr 300px;
+        gap: 1.5rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+        gap: 1rem;
+      }
+      
+      .header-content {
+        padding: 0 1rem;
+      }
+      
+      .logo-text h1 {
+        font-size: 1.2rem;
+      }
+      
+      canvas {
+        width: 100%;
+        height: 400px;
+        max-width: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-atom"></i>
+        </div>
+        <div class="logo-text">
+          <h1>Buraco Negro</h1>
+          <div class="subtitle">Simulador de espaço-tempo · projeto pessoal</div>
+        </div>
+      </div>
+      <div class="header-controls">
+        <button class="btn" id="resetBtn">
+          <i class="fas fa-redo"></i>
+          Reset
+        </button>
+        <button class="btn" id="exportBtn">
+          <i class="fas fa-download"></i>
+          Exportar
+        </button>
+        <button class="btn btn-primary" id="fullscreenBtn">
+          <i class="fas fa-expand"></i>
+          Tela Cheia
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="simulation-panel">
+      <div class="canvas-container">
+        <div class="canvas-header">
+          <div class="canvas-title">Simulação Gravitacional</div>
+          <div class="canvas-status">
+            <div class="status-dot"></div>
+            Ativo
+          </div>
+        </div>
+        <canvas id="blackhole" width="700" height="700" aria-label="Canvas da simulação"></canvas>
+        <div class="canvas-controls">
+          <button class="btn" id="pauseBtn">
+            <i class="fas fa-pause"></i>
+            Pausar
+          </button>
+          <button class="btn" id="recordBtn">
+            <i class="fas fa-record-vinyl"></i>
+            Gravar
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="control-panel">
+      <div class="panel-header">
+        <div class="panel-icon">
+          <i class="fas fa-sliders-h"></i>
+        </div>
+        <div class="panel-title">Parâmetros Físicos</div>
+      </div>
+      
+      <div class="preset-buttons">
+        <button class="preset-btn active" data-preset="standard">Padrão</button>
+        <button class="preset-btn" data-preset="stellar">Estelar</button>
+        <button class="preset-btn" data-preset="supermassive">Supermassivo</button>
+        <button class="preset-btn" data-preset="extremal">Extremo</button>
+      </div>
+      
+      <div class="control-group">
+        <div class="control-label">
+          <span>Massa (M☉)</span>
+          <span class="control-value" id="massValue">5.0<span class="control-unit">M☉</span></span>
+        </div>
+        <input type="range" class="slider" id="massSlider" min="1" max="50" value="5" step="0.1">
+      </div>
+      
+      <div class="control-group">
+        <div class="control-label">
+          <span>Momento Angular</span>
+          <span class="control-value" id="spinValue">0.5<span class="control-unit">c</span></span>
+        </div>
+        <input type="range" class="slider" id="spinSlider" min="0" max="0.998" value="0.5" step="0.001">
+      </div>
+      
+      <div class="control-group">
+        <div class="control-label">
+          <span>Taxa de Acreção</span>
+          <span class="control-value" id="accretionValue">1.0<span class="control-unit">Ṁ_Edd</span></span>
+        </div>
+        <input type="range" class="slider" id="accretionSlider" min="0.1" max="5" value="1" step="0.1">
+      </div>
+      
+      <div class="control-group">
+        <div class="control-label">
+          <span>Campo Magnético</span>
+          <span class="control-value" id="magneticValue">1.0<span class="control-unit">G</span></span>
+        </div>
+        <input type="range" class="slider" id="magneticSlider" min="0" max="10" value="1" step="0.1">
+      </div>
+      
+      <div class="control-group">
+        <div class="control-label">
+          <span>Densidade de Partículas</span>
+          <span class="control-value" id="densityValue">100<span class="control-unit">n/cm³</span></span>
+        </div>
+        <input type="range" class="slider" id="densitySlider" min="10" max="500" value="100" step="10">
+      </div>
+    </div>
+    
+    <div class="control-panel">
+      <div class="panel-header">
+        <div class="panel-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="panel-title">Dados Observacionais</div>
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-circle"></i>
+            Raio de Schwarzschild
+          </div>
+          <div class="info-value" id="schwarzschildRadius">2.95 km</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-sync-alt"></i>
+            Raio Ergosfera
+          </div>
+          <div class="info-value" id="ergosphereRadius">4.18 km</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-thermometer-half"></i>
+            Temperatura Hawking
+          </div>
+          <div class="info-value" id="hawkingTemp">1.23×10⁻⁸ K</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-bolt"></i>
+            Luminosidade
+          </div>
+          <div class="info-value" id="luminosity">3.8×10²⁶ W</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-tachometer-alt"></i>
+            Partículas Ativas
+          </div>
+          <div class="info-value" id="activeParticles">0</div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-label">
+            <i class="fas fa-clock"></i>
+            Taxa de Quadros
+          </div>
+          <div class="info-value" id="fps">60 FPS</div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <div class="chart-title">Performance da Simulação</div>
+        <div class="performance-graph" id="performanceGraph"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const PHYSICS = {
+      G: 6.67430e-11,           // Constante gravitacional
+      C: 299792458,             // Velocidade da luz (m/s)
+      SOLAR_MASS: 1.989e30,     // Massa solar (kg)
+      PLANCK_CONSTANT: 6.62607015e-34,
+      BOLTZMANN_CONSTANT: 1.380649e-23,
+      STEFAN_BOLTZMANN: 5.670374419e-8
+    };
+
+    const canvas = document.getElementById('blackhole');
+    const ctx = canvas.getContext('2d');
+    const BASE_SIZE = 700;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = BASE_SIZE * dpr;
+    canvas.height = BASE_SIZE * dpr;
+    canvas.style.width = BASE_SIZE + 'px';
+    canvas.style.height = BASE_SIZE + 'px';
+    ctx.scale(dpr, dpr);
+    const cx = BASE_SIZE / 2;
+    const cy = BASE_SIZE / 2;
+    
+    let simulationState = {
+      running: true,
+      recording: false,
+      mediaRecorder: null,
+      recordedChunks: [],
+      time: 0,
+      frameCount: 0,
+      lastTime: 0,
+      currentFPS: 60,
+      fpsHistory: []
+    };
+    
+    let mouseX = cx;
+    let mouseY = cy;
+    
+    let blackHoleParams = {
+      mass: 5.0,              // Massa em unidades solares
+      spin: 0.5,              // Parâmetro de spin (0-0.998)
+      accretionRate: 1.0,     // Taxa de acreção (fração de Eddington)
+      magneticField: 1.0,     // Campo magnético (Gauss)
+      particleDensity: 100    // Densidade de partículas
+    };
+    
+    const PRESETS = {
+      standard: {
+        mass: 5.0,
+        spin: 0.5,
+        accretionRate: 1.0,
+        magneticField: 1.0,
+        particleDensity: 100
+      },
+      stellar: {
+        mass: 10.0,
+        spin: 0.7,
+        accretionRate: 0.5,
+        magneticField: 5.0,
+        particleDensity: 200
+      },
+      supermassive: {
+        mass: 40.0,
+        spin: 0.9,
+        accretionRate: 2.0,
+        magneticField: 0.1,
+        particleDensity: 50
+      },
+      extremal: {
+        mass: 20.0,
+        spin: 0.998,
+        accretionRate: 5.0,
+        magneticField: 10.0,
+        particleDensity: 500
+      }
+    };
+    
+    class AdvancedParticle {
+      constructor() {
+        this.reset();
+      }
+      
+      reset() {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * 250 + 200;
+        this.x = cx + Math.cos(angle) * distance;
+        this.y = cy + Math.sin(angle) * distance;
+        
+        const orbitalVel = Math.sqrt(blackHoleParams.mass * 0.1 / distance);
+        this.vx = -Math.sin(angle) * orbitalVel + (Math.random() - 0.5) * 0.5;
+        this.vy = Math.cos(angle) * orbitalVel + (Math.random() - 0.5) * 0.5;
+        
+        this.life = 1.0;
+        this.mass = Math.random() * 0.1 + 0.05;
+        this.temperature = 1000 + Math.random() * 5000;
+        this.size = Math.max(0.5, this.mass * 10);
+        this.trail = [];
+        
+        this.updateColor();
+      }
+      
+      updateColor() {
+        const temp = this.temperature;
+        let r, g, b;
+        
+        if (temp < 3000) {
+          r = 255;
+          g = Math.min(255, (temp - 1000) * 0.2);
+          b = 0;
+        } else if (temp < 5000) {
+          r = 255;
+          g = Math.min(255, 100 + (temp - 3000) * 0.1);
+          b = Math.min(255, (temp - 3000) * 0.2);
+        } else {
+          r = Math.max(100, 255 - (temp - 5000) * 0.05);
+          g = Math.max(150, 255 - (temp - 5000) * 0.03);
+          b = 255;
+        }
+        
+        this.color = `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+      }
+      
+      update() {
+        const dx = cx - this.x;
+        const dy = cy - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        const rs = this.calculateSchwarzschildRadius();
+        const relativisticFactor = 1 / (1 - rs / distance);
+        const force = (blackHoleParams.mass * 0.5) / (distance * distance) * relativisticFactor;
+        
+        this.vx += (dx / distance) * force * 0.01;
+        this.vy += (dy / distance) * force * 0.01;
+        
+        if (distance < 200 && blackHoleParams.spin > 0) {
+          const angle = Math.atan2(dy, dx);
+          const frameDragForce = blackHoleParams.spin * 0.02 * (200 - distance) / 200;
+          this.vx += -Math.sin(angle) * frameDragForce;
+          this.vy += Math.cos(angle) * frameDragForce;
+        }
+        
+        if (distance < 150) {
+          const tidalForce = blackHoleParams.mass / Math.pow(distance, 3);
+          this.vx += (Math.random() - 0.5) * tidalForce * 0.001;
+          this.vy += (Math.random() - 0.5) * tidalForce * 0.001;
+        }
+        
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        if (distance < 180) {
+          const frictionHeating = (180 - distance) * blackHoleParams.accretionRate * 10;
+          this.temperature += frictionHeating;
+          this.updateColor();
+        }
+        
+        this.trail.push({x: this.x, y: this.y, alpha: this.life});
+        if (this.trail.length > 12) {
+          this.trail.shift();
+        }
+        
+        if (distance < rs * 2) {
+          this.life -= 0.03;
+        }
+        
+        if (distance < rs || this.life <= 0) {
+          this.reset();
+        }
+      }
+      
+      calculateSchwarzschildRadius() {
+        return 50 + blackHoleParams.mass * 3; // Simplificado para visualização
+      }
+      
+      draw() {
+        ctx.save();
+        
+        for (let i = 0; i < this.trail.length - 1; i++) {
+          const alpha = (i / this.trail.length) * this.life * 0.4;
+          const width = this.size * (i / this.trail.length) * 0.5;
+          
+          ctx.globalAlpha = alpha;
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = Math.max(0.5, width);
+          ctx.beginPath();
+          ctx.moveTo(this.trail[i].x, this.trail[i].y);
+          ctx.lineTo(this.trail[i + 1].x, this.trail[i + 1].y);
+          ctx.stroke();
+        }
+        
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 8 + this.temperature * 0.001;
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+      }
+    }
+    
+    let particles = [];
+    let backgroundStars = [];
+    
+    function initializeStars() {
+      backgroundStars = [];
+      for (let i = 0; i < 300; i++) {
+        backgroundStars.push({
+          x: Math.random() * BASE_SIZE,
+          y: Math.random() * BASE_SIZE,
+          size: Math.random() * 2 + 0.3,
+          brightness: Math.random() * 0.8 + 0.2,
+          color: Math.random() > 0.8 ? '#ffddaa' : '#ffffff'
+        });
+      }
+    }
+    
+    function initializeParticles() {
+      particles = [];
+      for (let i = 0; i < blackHoleParams.particleDensity; i++) {
+        particles.push(new AdvancedParticle());
+      }
+    }
+    
+    function drawBackground() {
+      ctx.save();
+      for (let star of backgroundStars) {
+        ctx.globalAlpha = star.brightness;
+        ctx.fillStyle = star.color;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    
+    function drawAccretionDisk() {
+      const rs = 50 + blackHoleParams.mass * 3;
+      const innerRadius = rs * 1.5;
+      const outerRadius = rs * 4;
+      const numRings = 32;
+      
+      ctx.save();
+      ctx.translate(cx, cy);
+      
+      for (let i = 0; i < numRings; i++) {
+        const progress = i / numRings;
+        const radius = innerRadius + (outerRadius - innerRadius) * progress;
+        const rotationOffset = simulationState.time * blackHoleParams.spin * 0.01 * (1 - progress);
+        
+        ctx.save();
+        ctx.rotate(rotationOffset);
+        
+        const diskTemp = 10000 / Math.pow(progress + 0.5, 0.75);
+        const intensity = blackHoleParams.accretionRate * (1 - progress * 0.7);
+        
+        let hue = 40;
+        if (diskTemp > 8000) hue = 220;
+        else if (diskTemp > 5000) hue = 60;
+        
+        const color = `hsl(${hue}, 90%, ${Math.min(80, 30 + intensity * 50)}%)`;
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0.2, 1.4, false);
+        ctx.lineWidth = 12 + Math.sin(simulationState.time * 0.1 + i * 0.2) * 3;
+        ctx.strokeStyle = color;
+        ctx.shadowBlur = 25 * intensity;
+        ctx.shadowColor = color;
+        ctx.globalAlpha = intensity * 0.8;
+        ctx.stroke();
+        
+        ctx.restore();
+      }
+      
+      ctx.restore();
+    }
+    
+    function drawEventHorizon() {
+      const rs = 50 + blackHoleParams.mass * 3;
+      const ergosphere = rs * (1 + Math.sqrt(1 - Math.pow(blackHoleParams.spin, 2))) / 2;
+      
+      if (blackHoleParams.spin > 0.1) {
+        const ergosphereGrad = ctx.createRadialGradient(cx, cy, rs, cx, cy, ergosphere);
+        ergosphereGrad.addColorStop(0, "rgba(0,50,100,0)");
+        ergosphereGrad.addColorStop(0.8, "rgba(0,100,200,0.1)");
+        ergosphereGrad.addColorStop(1, "rgba(0,150,255,0.05)");
+        
+        ctx.save();
+        ctx.fillStyle = ergosphereGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, ergosphere, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      
+      const eventHorizonGrad = ctx.createRadialGradient(cx, cy, rs * 0.3, cx, cy, rs * 1.2);
+      eventHorizonGrad.addColorStop(0, "#000008");
+      eventHorizonGrad.addColorStop(0.7, "#001122");
+      eventHorizonGrad.addColorStop(0.9, "#000000");
+      eventHorizonGrad.addColorStop(1, "rgba(0,0,0,0)");
+      
+      ctx.save();
+      ctx.fillStyle = eventHorizonGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rs * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.fillStyle = "#000000";
+      ctx.shadowColor = "#000000";
+      ctx.shadowBlur = 60;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rs, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.restore();
+    }
+    
+    function drawGravitationalLensing() {
+      const dx = mouseX - cx;
+      const dy = mouseY - cy;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const rs = 50 + blackHoleParams.mass * 3;
+      
+      if (distance > rs && distance < 350) {
+        const intensity = Math.max(0, 1 - distance / 350);
+        const lensingStrength = blackHoleParams.mass * intensity * 0.1;
+        
+        ctx.save();
+        ctx.globalAlpha = lensingStrength;
+        
+        ctx.strokeStyle = `rgba(0, 212, 255, ${lensingStrength})`;
+        ctx.lineWidth = 6;
+        ctx.shadowColor = "#00d4ff";
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(mouseX, mouseY, 50 + lensingStrength * 30, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        ctx.strokeStyle = `rgba(255, 255, 255, ${lensingStrength * 0.5})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(mouseX, mouseY, 80 + lensingStrength * 40, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        ctx.restore();
+      }
+    }
+    
+    function calculatePhysicalProperties() {
+      const mass_kg = blackHoleParams.mass * PHYSICS.SOLAR_MASS;
+      const rs_meters = 2 * PHYSICS.G * mass_kg / (PHYSICS.C * PHYSICS.C);
+      const hawkingTemp = PHYSICS.PLANCK_CONSTANT * PHYSICS.C * PHYSICS.C * PHYSICS.C / 
+                          (8 * Math.PI * PHYSICS.BOLTZMANN_CONSTANT * PHYSICS.G * mass_kg);
+      const luminosity = blackHoleParams.accretionRate * 1.26e38 * blackHoleParams.mass;
+      
+      return {
+        schwarzschildRadius: rs_meters / 1000, // em km
+        ergosphereRadius: rs_meters * (1 + Math.sqrt(1 - blackHoleParams.spin * blackHoleParams.spin)) / 2000,
+        hawkingTemperature: hawkingTemp,
+        luminosity: luminosity
+      };
+    }
+    
+    function updateUI() {
+      const physics = calculatePhysicalProperties();
+      
+      document.getElementById('massValue').innerHTML = `${blackHoleParams.mass.toFixed(1)}<span class="control-unit">M☉</span>`;
+      document.getElementById('spinValue').innerHTML = `${blackHoleParams.spin.toFixed(3)}<span class="control-unit">c</span>`;
+      document.getElementById('accretionValue').innerHTML = `${blackHoleParams.accretionRate.toFixed(1)}<span class="control-unit">Ṁ_Edd</span>`;
+      document.getElementById('magneticValue').innerHTML = `${blackHoleParams.magneticField.toFixed(1)}<span class="control-unit">G</span>`;
+      document.getElementById('densityValue').innerHTML = `${blackHoleParams.particleDensity}<span class="control-unit">n/cm³</span>`;
+      
+      document.getElementById('schwarzschildRadius').textContent = `${physics.schwarzschildRadius.toFixed(2)} km`;
+      document.getElementById('ergosphereRadius').textContent = `${physics.ergosphereRadius.toFixed(2)} km`;
+      document.getElementById('hawkingTemp').textContent = `${physics.hawkingTemperature.toExponential(2)} K`;
+      document.getElementById('luminosity').textContent = `${physics.luminosity.toExponential(1)} W`;
+      document.getElementById('activeParticles').textContent = particles.length;
+      document.getElementById('fps').textContent = `${Math.round(simulationState.currentFPS)} FPS`;
+      
+      updatePerformanceGraph();
+    }
+    
+    function updatePerformanceGraph() {
+      simulationState.fpsHistory.push(simulationState.currentFPS);
+      if (simulationState.fpsHistory.length > 50) {
+        simulationState.fpsHistory.shift();
+      }
+      
+      const graph = document.getElementById('performanceGraph');
+      const maxFPS = Math.max(...simulationState.fpsHistory, 60);
+      const minFPS = Math.min(...simulationState.fpsHistory, 0);
+      
+      let pathData = '';
+      simulationState.fpsHistory.forEach((fps, index) => {
+        const x = (index / simulationState.fpsHistory.length) * 100;
+        const y = 80 - ((fps - minFPS) / (maxFPS - minFPS)) * 80;
+        pathData += index === 0 ? `M${x},${y}` : `L${x},${y}`;
+      });
+      
+      graph.innerHTML = `
+        <svg width="100%" height="80px" style="position: absolute; top: 0; left: 0;">
+          <path d="${pathData}" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.8"/>
+        </svg>
+      `;
+    }
+    
+    function animate(currentTime) {
+      if (!simulationState.running) {
+        requestAnimationFrame(animate);
+        return;
+      }
+      
+      if (currentTime - simulationState.lastTime >= 1000) {
+        simulationState.currentFPS = simulationState.frameCount;
+        simulationState.frameCount = 0;
+        simulationState.lastTime = currentTime;
+      }
+      simulationState.frameCount++;
+      
+      simulationState.time += 0.016;
+      
+      ctx.clearRect(0, 0, BASE_SIZE, BASE_SIZE);
+      
+      drawBackground();
+      drawAccretionDisk();
+      
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+      
+      drawEventHorizon();
+      drawGravitationalLensing();
+      updateUI();
+      
+      requestAnimationFrame(animate);
+    }
+    
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    });
+    
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length > 0) {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.touches[0].clientX - rect.left;
+        mouseY = e.touches[0].clientY - rect.top;
+      }
+    });
+    
+    document.getElementById('massSlider').addEventListener('input', (e) => {
+      blackHoleParams.mass = parseFloat(e.target.value);
+    });
+    
+    document.getElementById('spinSlider').addEventListener('input', (e) => {
+      blackHoleParams.spin = parseFloat(e.target.value);
+    });
+    
+    document.getElementById('accretionSlider').addEventListener('input', (e) => {
+      blackHoleParams.accretionRate = parseFloat(e.target.value);
+    });
+    
+    document.getElementById('magneticSlider').addEventListener('input', (e) => {
+      blackHoleParams.magneticField = parseFloat(e.target.value);
+    });
+    
+    document.getElementById('densitySlider').addEventListener('input', (e) => {
+      blackHoleParams.particleDensity = parseInt(e.target.value);
+      initializeParticles();
+    });
+    
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const preset = PRESETS[btn.dataset.preset];
+        blackHoleParams = { ...preset };
+        
+        document.getElementById('massSlider').value = preset.mass;
+        document.getElementById('spinSlider').value = preset.spin;
+        document.getElementById('accretionSlider').value = preset.accretionRate;
+        document.getElementById('magneticSlider').value = preset.magneticField;
+        document.getElementById('densitySlider').value = preset.particleDensity;
+        
+        initializeParticles();
+      });
+    });
+    
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      simulationState.running = !simulationState.running;
+      const btn = document.getElementById('pauseBtn');
+      const icon = btn.querySelector('i');
+      const text = btn.childNodes[1];
+      
+      if (simulationState.running) {
+        icon.className = 'fas fa-pause';
+        text.textContent = ' Pausar';
+      } else {
+        icon.className = 'fas fa-play';
+        text.textContent = ' Continuar';
+      }
+    });
+    
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      blackHoleParams = { ...PRESETS.standard };
+      document.getElementById('massSlider').value = PRESETS.standard.mass;
+      document.getElementById('spinSlider').value = PRESETS.standard.spin;
+      document.getElementById('accretionSlider').value = PRESETS.standard.accretionRate;
+      document.getElementById('magneticSlider').value = PRESETS.standard.magneticField;
+      document.getElementById('densitySlider').value = PRESETS.standard.particleDensity;
+      
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-preset="standard"]').classList.add('active');
+      
+      initializeParticles();
+    });
+    
+    document.getElementById('fullscreenBtn').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    });
+    
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `black-hole-simulation-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    document.getElementById('recordBtn').addEventListener('click', async () => {
+      if (simulationState.recording) {
+        simulationState.recording = false;
+        if (simulationState.mediaRecorder && simulationState.mediaRecorder.state !== 'inactive') {
+          simulationState.mediaRecorder.stop();
+        }
+        const btn = document.getElementById('recordBtn');
+        btn.querySelector('i').className = 'fas fa-record-vinyl';
+        btn.innerHTML = '<i class="fas fa-record-vinyl"></i> Gravar';
+        btn.classList.remove('recording');
+        return;
+      }
+      try {
+        const stream = canvas.captureStream(30);
+        simulationState.recordedChunks = [];
+        const options = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+          ? { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 2500000 }
+          : { videoBitsPerSecond: 2500000 };
+        simulationState.mediaRecorder = new MediaRecorder(stream, options);
+        simulationState.mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) simulationState.recordedChunks.push(e.data);
+        };
+        simulationState.mediaRecorder.onstop = () => {
+          const blob = new Blob(simulationState.recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `buraco-negro-simulacao-${Date.now()}.webm`;
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+        simulationState.mediaRecorder.start(500);
+        simulationState.recording = true;
+        const btn = document.getElementById('recordBtn');
+        btn.querySelector('i').className = 'fas fa-stop';
+        btn.innerHTML = '<i class="fas fa-stop"></i> Parar gravação';
+        btn.classList.add('recording');
+      } catch (err) {
+        console.warn('Gravação não suportada:', err);
+        alert('Gravação de vídeo não disponível neste navegador. Use Chrome ou Edge.');
+      }
+    });
+    
+    initializeStars();
+    initializeParticles();
+    animate(0);
+  </script>
+</body>
+</html>
